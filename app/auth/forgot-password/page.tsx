@@ -13,12 +13,9 @@ export default function ForgotPasswordPage() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    toast.success("Password reset successfully!");
     setTimeout(() => {
-      toast.success("Password reset successfully!");
-      setLoading(false);
-      setTimeout(() => {
-        router.push("/auth/sign-in");
-      }, 1200);
+      router.push("/auth/sign-in");
     }, 1000);
   };
 
@@ -44,4 +41,4 @@ export default function ForgotPasswordPage() {
       </form>
     </div>
   );
-} 
+}

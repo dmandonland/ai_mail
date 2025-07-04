@@ -260,7 +260,7 @@ export function MailLayout({
   }
 
   // Add this handler for forwarding
-  const handleForward = async ({ to, subject, body, originalMail }: { to: string; subject: string; body: string; originalMail: Mail }) => {
+  const handleForward = async ({ subject, body, originalMail }: { to: string; subject: string; body: string; originalMail: Mail }) => {
     const currentAccountObj = defaultAccounts.find(acc => acc.id === selectedAccount)
     setMails(prevMails => [
       ...prevMails,

@@ -90,7 +90,7 @@ export default function SignInPage() {
                 </p>
               </div>
             </div>
-            <Button type="submit" className="w-full" disabled={!allValid}>
+            <Button type="submit" className="w-full bg-[#A24AD9]" disabled={!allValid}>
               Sign In
             </Button>
             <div className="relative">

@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { sendEmailAction } from "@/app/mail/actions" // We'll create this action
-import { DialogClose } from "@radix-ui/react-dialog"
+// import { DialogClose } from "@radix-ui/react-dialog"
 
 interface MailComposeDialogProps {
   open: boolean

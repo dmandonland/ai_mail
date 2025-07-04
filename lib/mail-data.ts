@@ -70,7 +70,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-4",
+    id: "mail-4b",
     accountId: "account-2",
     name: "Your Bank",
     email: "security@yourbank.com",
@@ -102,7 +102,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-21", // was mail-5, now unique
+    id: "mail-6b",
     accountId: "account-2",
     name: "Jane Smith",
     email: "jane.smith@example.com",
@@ -118,7 +118,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-6",
+    id: "mail-7b",
     accountId: "account-2",
     name: "Draft Email",
     email: "alicia@example.com",
@@ -133,7 +133,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-7",
+    id: "mail-8b",
     accountId: "account-2",
     name: "Tech Conference",
     email: "events@techconf.com",
@@ -148,7 +148,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-8",
+    id: "mail-9b",
     accountId: "account-2",
     name: "Online Store",
     email: "deals@shoponline.com",
@@ -163,7 +163,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-9",
+    id: "mail-10b",
     accountId: "account-2",
     name: "Old Project Group",
     email: "archive@projects.com",
@@ -179,7 +179,7 @@ export const mails: Mail[] = [
   },
   // New emails for Alicia Keys (account-1)
   {
-    id: "mail-10",
+    id: "mail-11",
     accountId: "account-1",
     name: "Galaxy Airlines",
     email: "noreply@galaxy-airlines.com",
@@ -194,7 +194,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-11",
+    id: "mail-12",
     accountId: "account-1",
     name: "Maria Garcia",
     email: "maria.garcia@example.com",
@@ -209,7 +209,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-12",
+    id: "mail-13",
     accountId: "account-1",
     name: "Creative Team",
     email: "creative-team@work.com",
@@ -224,7 +224,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-13",
+    id: "mail-14",
     accountId: "account-1",
     name: "Social-Connect",
     email: "notification@social-connect.net",
@@ -239,7 +239,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-14",
+    id: "mail-15",
     accountId: "account-1",
     name: "Self",
     email: "alicia@example.com",
@@ -254,7 +254,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-15",
+    id: "mail-16",
     accountId: "account-1",
     name: "ArtStation",
     email: "digest@artstation.com",
@@ -270,7 +270,7 @@ export const mails: Mail[] = [
   },
   // New emails for Bob Marley (account-2)
   {
-    id: "mail-16",
+    id: "mail-17",
     accountId: "account-2",
     name: "CloudServices Inc.",
     email: "security@cloudservices.com",
@@ -285,7 +285,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-17",
+    id: "mail-18",
     accountId: "account-2",
     name: "Ziggy",
     email: "ziggy@example.com",
@@ -300,7 +300,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-18",
+    id: "mail-19",
     accountId: "account-2",
     name: "The Band",
     email: "band@example.com",
@@ -315,7 +315,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-19",
+    id: "mail-20",
     accountId: "account-2",
     name: "Rita",
     email: "rita@example.com",
@@ -330,7 +330,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-20",
+    id: "mail-21",
     accountId: "account-2",
     name: "Guitar World",
     email: "orders@guitarworld.com",
@@ -345,7 +345,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-21",
+    id: "mail-22",
     accountId: "account-2",
     name: "Delivery Service",
     email: "track@delivery-pro.net",
