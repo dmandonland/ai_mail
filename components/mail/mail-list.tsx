@@ -1,10 +1,8 @@
 "use client"
 
-import type { ComponentProps } from "react"
-import { formatDistanceToNow } from "date-fns/formatDistanceToNow"
+import { formatDistanceToNow } from "date-fns"
 
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type { Mail } from "@/types/mail"
 
@@ -12,17 +10,18 @@ interface MailListProps {
   items: Mail[]
   selectedMail: Mail["id"] | null
   onSelectMail: (id: Mail["id"]) => void
+  labels?: { name: string; color: string }[]
 }
 
-export function MailList({ items, selectedMail, onSelectMail }: MailListProps) {
+export function MailList({ items, selectedMail, onSelectMail, labels = [] }: MailListProps) {
   if (!items || items.length === 0) {
     return (
       <div className="flex h-full items-center justify-center text-muted-foreground">No messages in this folder.</div>
     )
   }
   return (
-    <ScrollArea className="flex-1">
-      <div className="flex flex-col gap-2 p-4 pt-0">
+    <ScrollArea className="flex-1 h-full">
+      <div className="flex flex-col gap-2 p-4 pt-0 h-full">
         {items.map((item) => (
           <button
             key={item.id}
@@ -51,12 +50,20 @@ export function MailList({ items, selectedMail, onSelectMail }: MailListProps) {
             <div className={cn("text-xs font-medium", !item.read && "font-bold")}>{item.subject}</div>
             <div className="line-clamp-2 text-xs text-muted-foreground">{item.text.substring(0, 300)}</div>
             {item.labels.length ? (
-              <div className="flex items-center gap-2">
-                {item.labels.map((label) => (
-                  <Badge key={label} variant={getBadgeVariantFromLabel(label)}>
-                    {label}
-                  </Badge>
-                ))}
+              <div className="flex items-center gap-2 mt-1">
+                {item.labels.map((label) => {
+                  const labelObj = labels.find(l => l.name === label)
+                  if (!labelObj) return null
+                  return (
+                    <span
+                      key={label}
+                      className="px-2 py-0.5 rounded text-xs font-medium"
+                      style={{ backgroundColor: labelObj.color, color: '#fff' }}
+                    >
+                      {label}
+                    </span>
+                  )
+                })}
               </div>
             ) : null}
           </button>
@@ -64,17 +71,4 @@ export function MailList({ items, selectedMail, onSelectMail }: MailListProps) {
       </div>
     </ScrollArea>
   )
-}
-
-function getBadgeVariantFromLabel(label: string): ComponentProps<typeof Badge>["variant"] {
-  if (["work"].includes(label.toLowerCase())) {
-    return "default"
-  }
-  if (["personal"].includes(label.toLowerCase())) {
-    return "outline"
-  }
-  if (["important", "security"].includes(label.toLowerCase())) {
-    return "destructive"
-  }
-  return "secondary"
 }

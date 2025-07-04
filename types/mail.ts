@@ -4,6 +4,7 @@ export interface Account {
   label: string
   email: string
   icon?: React.ReactNode
+  avatar?: string
 }
 
 export interface Mail {

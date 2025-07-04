@@ -107,7 +107,7 @@ export default function SignInPage() {
             </Button>
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="./forgot-password" className="text-sm text-muted-foreground hover:text-primary">
               Forgot your password?
             </Link>
           </CardFooter>

@@ -31,7 +31,7 @@ export function MailNavLinks({ isCollapsed, selectedFolder, onSelectFolder }: Na
                     buttonVariants({ variant: link.variant, size: "icon" }),
                     "h-9 w-9",
                     selectedFolder === folderName &&
-                      "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white",
+                      "dark:text-white text-primary font-bold",
                   )}
                 >
                   <link.icon className="h-4 w-4" />
@@ -50,14 +50,17 @@ export function MailNavLinks({ isCollapsed, selectedFolder, onSelectFolder }: Na
               className={cn(
                 buttonVariants({ variant: link.variant, size: "sm" }),
                 selectedFolder === folderName &&
-                  "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white",
+                  "dark:text-white text-[#D09CF0] font-bold",
                 "justify-start",
               )}
             >
               <link.icon className="mr-2 h-4 w-4" />
               {link.title}
               {unreadCount > 0 && (
-                <span className={cn("ml-auto", selectedFolder === folderName && "text-background dark:text-white")}>
+                <span className={cn(
+                  "ml-auto",
+                  selectedFolder === folderName ? "text-primary font-bold" : "text-muted-foreground"
+                )}>
                   {unreadCount}
                 </span>
               )}

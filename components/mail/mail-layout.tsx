@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { PenSquare, Search, Menu } from "lucide-react"
+import { PenSquare, Search, Menu, Trash2, Paintbrush } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
@@ -10,7 +10,7 @@ import { useMobile } from "@/hooks/use-mobile"
 import { Input } from "@/components/ui/input"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AccountSwitcher } from "@/components/mail/account-switcher"
 import { MailList } from "@/components/mail/mail-list"
@@ -23,14 +23,18 @@ import {
   accounts as defaultAccounts,
   mails as defaultMails,
   secondaryNavLinks,
-  archiveMail,
-  deleteMail,
-  restoreMail,
-  permanentlyDeleteMail,
-  markAsRead,
   markAsUnread,
+  userLabels as defaultUserLabels,
 } from "@/lib/mail-data"
 import type { Mail, Account, MailFolder } from "@/types/mail"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"
+import { Dialog, DialogTrigger, DialogContent, DialogHeader } from "@/components/ui/dialog"
 
 interface MailLayoutProps {
   defaultLayout?: number[]
@@ -53,6 +57,11 @@ export function MailLayout({
   const [isNavOpen, setIsNavOpen] = React.useState(false)
   const [refreshKey, setRefreshKey] = React.useState(0)
   const [mails, setMails] = React.useState<Mail[]>(defaultMails)
+  const [labels, setLabels] = React.useState<{ name: string; color: string }[]>([])
+  const [labelFilter, setLabelFilter] = React.useState<string>("all")
+  const [isLabelsDialogOpen, setIsLabelsDialogOpen] = React.useState(false)
+  const [userLabels, setUserLabels] = React.useState(defaultUserLabels)
+  const [hoveredLabel, setHoveredLabel] = React.useState<string | null>(null)
 
   const handleAccountChange = (accountId: Account["id"]) => {
     setSelectedAccount(accountId)
@@ -62,7 +71,13 @@ export function MailLayout({
   const currentAccount = defaultAccounts.find((acc) => acc.id === selectedAccount) || defaultAccounts[0]
 
   const filteredMails = mails.filter(
-    (mail) => mail.accountId === selectedAccount && mail.folder === selectedFolder
+    (mail) =>
+      mail.accountId === selectedAccount &&
+      mail.folder === selectedFolder &&
+      (
+        labelFilter === "all" ||
+        (labelFilter === "__unread__" ? !mail.read : mail.labels.includes(labelFilter))
+      )
   )
   const selectedMail = mails.find((mail) => mail.id === selectedMailId && mail.accountId === selectedAccount) || null
 
@@ -244,6 +259,53 @@ export function MailLayout({
     toast.success("Draft saved!")
   }
 
+  // Add this handler for forwarding
+  const handleForward = async ({ to, subject, body, originalMail }: { to: string; subject: string; body: string; originalMail: Mail }) => {
+    const currentAccountObj = defaultAccounts.find(acc => acc.id === selectedAccount)
+    setMails(prevMails => [
+      ...prevMails,
+      {
+        id: `sent-${Date.now()}`,
+        accountId: selectedAccount,
+        name: currentAccountObj?.label || "Me",
+        email: currentAccountObj?.email || "me@example.com",
+        subject,
+        text: body,
+        date: new Date().toISOString(),
+        read: true,
+        labels: [],
+        avatarFallback: (currentAccountObj?.label || "M").split(" ").map(s => s[0]).join("").toUpperCase(),
+        folder: "sent",
+        replies: [],
+        // Optionally, you can add a replyToId or forwardedFrom field for threading
+        replyToId: originalMail.id,
+        // Optionally, add a to field if you want to display recipient in sent mail
+        // to,
+      },
+    ])
+    toast.success("Mail forwarded and sent!")
+  }
+
+  // Add label to global and mail
+  const handleAddLabel = (label: { name: string; color: string }, mailId: string) => {
+    setLabels(prev => prev.some(l => l.name === label.name) ? prev : [...prev, label])
+    setMails(prevMails => prevMails.map(mail =>
+      mail.id === mailId && !mail.labels.includes(label.name)
+        ? { ...mail, labels: [...mail.labels, label.name] }
+        : mail
+    ))
+    toast.success(`Label '${label.name}' added!`)
+  }
+
+  // Handler to change label color
+  const handleChangeLabelColor = (name: string, color: string) => {
+    setUserLabels(labels => labels.map(l => l.name === name ? { ...l, color } : l))
+  }
+  // Handler to delete label
+  const handleDeleteLabel = (name: string) => {
+    setUserLabels(labels => labels.filter(l => l.name !== name))
+  }
+
   if (isMobile) {
     return (
       <div className="h-full flex flex-col">
@@ -258,7 +320,7 @@ export function MailLayout({
               <ThemeToggle />
             </header>
             {isNavOpen && (
-              <div className="absolute top-14 left-0 z-10 w-full h-full bg-background/80 backdrop-blur-sm">
+              <div className="absolute top-14 left-0 w-full h-full bg-background/80 backdrop-blur-sm">
                 <div className="w-64 bg-background border-r h-full p-2 flex flex-col">
                   <AccountSwitcher
                     isCollapsed={false}
@@ -291,6 +353,7 @@ export function MailLayout({
               items={filteredMails}
               selectedMail={selectedMailId}
               onSelectMail={handleSelectMail}
+              labels={labels}
             />
             <Button
               className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg"
@@ -314,6 +377,9 @@ export function MailLayout({
             onSendDraft={handleSendDraft}
             currentFolder={selectedFolder}
             mails={mails}
+            onForward={handleForward}
+            onAddLabel={handleAddLabel}
+            labels={labels}
           />
         )}
         <MailComposeDialog open={isComposeOpen} onOpenChange={setIsComposeOpen} onSaveDraft={handleSaveNewDraft} />
@@ -340,142 +406,233 @@ export function MailLayout({
           onExpand={() => setIsCollapsed(false)}
           className={cn(
             isCollapsed && "min-w-[50px] transition-all duration-300 ease-in-out",
-            "flex flex-col bg-muted/50",
+            "flex flex-col",
           )}
         >
-          <div className={cn("flex h-[52px] items-center justify-center", isCollapsed ? "h-[52px]" : "px-2")}>
-            <AccountSwitcher
-              isCollapsed={isCollapsed}
-              accounts={defaultAccounts}
-              selectedAccount={currentAccount}
-              onAccountChange={handleAccountChange}
-            />
-          </div>
-          <Separator />
-          <div className="flex-grow overflow-y-auto py-2">
-            <MailNavLinks
-              isCollapsed={isCollapsed}
-              selectedFolder={selectedFolder}
-              onSelectFolder={setSelectedFolder}
-            />
-          </div>
-          <Separator />
-          <div className="p-2">
-            {isCollapsed ? (
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9 bg-background text-foreground"
-                onClick={() => setIsComposeOpen(true)}
-              >
-                <PenSquare className="h-4 w-4" />
-                <span className="sr-only">Compose Mail</span>
-              </Button>
-            ) : (
-              <Button
-                variant="default"
-                size="sm"
-                className="w-full justify-start"
-                onClick={() => setIsComposeOpen(true)}
-              >
-                <PenSquare className="mr-2 h-4 w-4" />
-                Compose Mail
-              </Button>
-            )}
-          </div>
-          <Separator />
-          <div className="py-2 flex flex-col items-center gap-1">
-            <ThemeToggle />
-            {secondaryNavLinks.map((link) =>
-              link.title === "Settings" ? (
-                <Link key={link.title} href="/settings">
-                  {isCollapsed ? (
-                    <Button variant="ghost" size="icon" className="h-9 w-9 mx-auto my-1 flex justify-center">
-                      <link.icon className="h-4 w-4" />
-                      <span className="sr-only">{link.title}</span>
-                    </Button>
-                  ) : (
-                    <Button variant="ghost" size="sm" className="w-full justify-start px-2">
-                      <link.icon className="mr-2 h-4 w-4" />
-                      {link.title}
-                    </Button>
-                  )}
-                </Link>
-              ) : isCollapsed ? (
+          <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between gap-2 pl-6 pr-2 py-2 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0">
+              <div className='flex items-center h-12 w-full'>
+                <AccountSwitcher
+                  isCollapsed={isCollapsed}
+                  accounts={defaultAccounts}
+                  selectedAccount={currentAccount}
+                  onAccountChange={handleAccountChange}
+                />
+              </div>
+            </div>
+            <Separator />
+            <div className="flex flex-col items-center px-2 py-3">
+              {isCollapsed ? (
                 <Button
-                  key={link.title}
-                  variant="ghost"
+                  variant="default"
                   size="icon"
-                  className="h-9 w-9 mx-auto my-1 flex justify-center"
+                  className="h-14 w-14 bg-[#A24AD9] text-primary-foreground shadow-lg hover:scale-105 transition-transform duration-200"
+                  onClick={() => setIsComposeOpen(true)}
+                  style={{ fontWeight: 500, fontSize: '1rem' }}
                 >
-                  <link.icon className="h-4 w-4" />
-                  <span className="sr-only">{link.title}</span>
+                  <PenSquare className="h-7 w-7" />
+                  <span className="sr-only">Compose Mail</span>
                 </Button>
               ) : (
-                <Button key={link.title} variant="ghost" size="sm" className="w-full justify-start px-2">
-                  <link.icon className="mr-2 h-4 w-4" />
-                  {link.title}
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="w-full py-6 mb-2 text-base font-medium bg-[#A24AD9] text-primary-foreground shadow-lg hover:scale-105 transition-transform duration-200"
+                  onClick={() => setIsComposeOpen(true)}
+                  style={{ fontWeight: 500, fontSize: '1rem', letterSpacing: '0.01em' }}
+                >
+                  <PenSquare className="mr-3 h-7 w-7" />
+                  Compose Mail
                 </Button>
-              ),
-            )}
+              )}
+            </div>
+            <div className="flex-grow overflow-y-auto py-2">
+              <MailNavLinks
+                isCollapsed={isCollapsed}
+                selectedFolder={selectedFolder}
+                onSelectFolder={setSelectedFolder}
+              />
+              {/* Labels Section */}
+              <div className="mt-6 px-2">
+                <div className="text-xs font-semibold uppercase tracking-wide mb-2 text-muted-foreground">Labels</div>
+                <div className="flex flex-col gap-1">
+                  <button
+                    className={`text-left px-2 py-1 rounded hover:bg-muted text-sm ${labelFilter === 'all' ? 'font-bold' : ''}`}
+                    onClick={() => setLabelFilter('all')}
+                  >
+                    All
+                  </button>
+                  {labels.length === 0 && <span className="text-xs text-muted-foreground">No labels</span>}
+                  {labels.map(label => (
+                    <button
+                      key={label.name}
+                      className={`text-left px-2 py-1 rounded hover:bg-muted text-sm flex items-center gap-2 ${labelFilter === label.name ? 'font-bold' : ''}`}
+                      onClick={() => setLabelFilter(label.name)}
+                    >
+                      <span className="inline-block w-2 h-2 rounded-full mr-2" style={{ background: label.color }} />
+                      {label.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <Separator />
+            <div className="py-2 flex flex-col items-center gap-1">
+              <ThemeToggle />
+            </div>
           </div>
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={30} className="flex flex-col h-full">
-          <Tabs defaultValue="all" className="flex-1 flex flex-col h-full">
-            <div className="flex items-center px-4 py-2">
-              <h1 className="text-xl font-bold capitalize">{selectedFolder}</h1>
-              <TabsList className="ml-auto">
-                <TabsTrigger value="all" className="text-zinc-600 dark:text-zinc-200">
-                  All mail
-                </TabsTrigger>
-                <TabsTrigger value="unread" className="text-zinc-600 dark:text-zinc-200">
-                  Unread
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            <Separator />
-            <div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <form>
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search" className="pl-8" />
+          <div className="flex-1 flex flex-col h-full min-h-0">
+            <div className="h-full flex flex-col min-h-0">
+              <div className="flex items-center justify-between gap-2 px-4 py-2 border-b bg-background/80 sticky top-0">
+                <div className='flex items-center h-12 w-full'>
+                  <h1 className="text-xl font-bold capitalize h-12 flex items-center">{selectedFolder}</h1>
                 </div>
-              </form>
+              </div>
+              <Separator />
+              <div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <form>
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Search" className="pl-8" />
+                  </div>
+                </form>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-[10px]">
+                <span className="text-sm font-medium">Filter:</span>
+                <Select value={labelFilter} onValueChange={setLabelFilter}>
+                  <SelectTrigger className="rounded-full border bg-muted text-foreground px-3 py-1 text-sm w-28">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="__unread__">Unread</SelectItem>
+                    {labels.map(label => (
+                      <SelectItem key={label.name} value={label.name}>{label.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {labelFilter && (
+                  <Button size="sm" variant="outline" onClick={() => setLabelFilter("")}>Clear</Button>
+                )}
+              </div>
+              <div className="flex-1 min-h-0">
+                <MailList
+                  key={refreshKey}
+                  items={filteredMails}
+                  selectedMail={selectedMailId}
+                  onSelectMail={handleSelectMail}
+                  labels={labels}
+                />
+              </div>
             </div>
-            <TabsContent value="all" className="m-0 flex-1 flex flex-col overflow-y-auto">
-              <MailList
-                key={refreshKey}
-                items={filteredMails}
-                selectedMail={selectedMailId}
-                onSelectMail={handleSelectMail}
-              />
-            </TabsContent>
-            <TabsContent value="unread" className="m-0 flex-1 flex flex-col overflow-y-auto">
-              <MailList
-                key={refreshKey}
-                items={filteredMails.filter((item) => !item.read)}
-                selectedMail={selectedMailId}
-                onSelectMail={handleSelectMail}
-              />
-            </TabsContent>
-          </Tabs>
+          </div>
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[2]}>
-          <MailView
-            mail={selectedMail}
-            onArchive={handleArchiveMail}
-            onDelete={handleDeleteMail}
-            onRestore={handleRestoreMail}
-            onMarkAsUnread={handleMarkAsUnread}
-            onMoveToJunk={handleMoveToJunk}
-            onSendReply={handleSendReply}
-            onSaveDraft={handleSaveDraft}
-            onSendDraft={handleSendDraft}
-            currentFolder={selectedFolder}
-            mails={mails}
-          />
+          <div className="h-full flex flex-col">
+            <div className="h-full flex flex-col">
+              <div className="flex items-center justify-between gap-2 pl-2 pr-6 py-2 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0">
+                <div className='flex items-center h-12 w-full'>
+                  {secondaryNavLinks.map((link) => (
+                    link.title === 'Manage Labels' ? (
+                      <Dialog open={isLabelsDialogOpen} onOpenChange={setIsLabelsDialogOpen} key={link.title}>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex items-center gap-2 h-12"
+                            onClick={() => setIsLabelsDialogOpen(true)}
+                          >
+                            <link.icon className="h-5 w-5 mr-1" />
+                            <span className="hidden sm:inline">{link.title}</span>
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader className="font-bold font-inter text-xl">Manage Labels</DialogHeader>
+                          <div className="flex flex-col gap-2 mt-4">
+                            {userLabels.length === 0 && <div className="text-muted-foreground">No labels created.</div>}
+                            {userLabels.map(label => (
+                              <div
+                                key={label.name}
+                                className="flex items-center justify-between group px-2 py-1 rounded hover:bg-accent transition-colors"
+                                onMouseEnter={() => setHoveredLabel(label.name)}
+                                onMouseLeave={() => setHoveredLabel(null)}
+                              >
+                                <span className="flex items-center gap-2">
+                                  <span style={{ backgroundColor: label.color, width: 16, height: 16, borderRadius: 4, display: 'inline-block' }} />
+                                  {label.name}
+                                </span>
+                                {hoveredLabel === label.name && (
+                                  <span className="flex gap-2">
+                                    <button
+                                      title="Change color"
+                                      className="p-1 rounded hover:bg-muted"
+                                      onClick={() => {
+                                        const newColor = prompt('Enter new color (hex):', label.color) || label.color
+                                        handleChangeLabelColor(label.name, newColor)
+                                      }}
+                                    >
+                                      <Paintbrush className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      title="Delete label"
+                                      className="p-1 rounded hover:bg-destructive/20"
+                                      onClick={() => handleDeleteLabel(label.name)}
+                                    >
+                                      <Trash2 className="w-4 h-4 text-destructive" />
+                                    </button>
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    ) : (
+                      <Button
+                        key={link.title}
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2 h-12"
+                        asChild={link.title === 'Settings'}
+                      >
+                        {link.title === 'Settings' ? (
+                          <Link href="/settings">
+                            <link.icon className="h-5 w-5 mr-1" />
+                            <span className="hidden sm:inline">{link.title}</span>
+                          </Link>
+                        ) : (
+                          <>
+                            <link.icon className="h-5 w-5 mr-1" />
+                            <span className="hidden sm:inline">{link.title}</span>
+                          </>
+                        )}
+                      </Button>
+                    )
+                  ))}
+                </div>
+              </div>
+              <MailView
+                mail={selectedMail}
+                onArchive={handleArchiveMail}
+                onDelete={handleDeleteMail}
+                onRestore={handleRestoreMail}
+                onMarkAsUnread={handleMarkAsUnread}
+                onMoveToJunk={handleMoveToJunk}
+                onSendReply={handleSendReply}
+                onSaveDraft={handleSaveDraft}
+                onSendDraft={handleSendDraft}
+                currentFolder={selectedFolder}
+                mails={mails}
+                onForward={handleForward}
+                onAddLabel={handleAddLabel}
+                labels={labels}
+              />
+            </div>
+          </div>
         </ResizablePanel>
       </ResizablePanelGroup>
       <MailComposeDialog open={isComposeOpen} onOpenChange={setIsComposeOpen} onSaveDraft={handleSaveNewDraft} />

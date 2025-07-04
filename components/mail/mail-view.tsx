@@ -42,6 +42,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import type { Mail, MailFolder } from "@/types/mail"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 
 interface MailViewProps {
   mail: Mail | null
@@ -65,6 +67,9 @@ interface MailViewProps {
   ) => void
   mails?: Mail[]
   onMoveToJunk?: (mailId: string) => void
+  onForward?: (forward: { to: string; subject: string; body: string; originalMail: Mail }) => Promise<void> | void
+  onAddLabel?: (label: { name: string; color: string }, mailId: string) => void
+  labels?: { name: string; color: string }[]
 }
 
 export function MailView({
@@ -80,6 +85,9 @@ export function MailView({
   onSendDraft,
   mails = [],
   onMoveToJunk,
+  onForward,
+  onAddLabel,
+  labels = [],
 }: MailViewProps) {
   const [showReply, setShowReply] = useState(false)
   const [replyText, setReplyText] = useState("")
@@ -90,6 +98,24 @@ export function MailView({
   )
   const [showOverlay, setShowOverlay] = useState(false)
   const draftBodyRef = useRef<HTMLDivElement>(null)
+  const [showForwardDialog, setShowForwardDialog] = useState(false)
+  const [forwardTo, setForwardTo] = useState("")
+  const [forwardSubject, setForwardSubject] = useState("")
+  const [forwardBody, setForwardBody] = useState("")
+  const [isForwarding, setIsForwarding] = useState(false)
+  const [showLabelDialog, setShowLabelDialog] = useState(false)
+  const [newLabelName, setNewLabelName] = useState("")
+  const [newLabelColor, setNewLabelColor] = useState("#1976d2")
+
+  const softColors = [
+    "#D84949", // red
+    "#4ED849", // green
+    "#4976D8", // blue
+    "#D8B849", // yellow
+    "#B849D8", // purple
+    "#49D8B8", // teal
+    "#D88C49", // orange
+  ]
 
   useEffect(() => {
     if (
@@ -106,6 +132,10 @@ export function MailView({
     setDraftBody(mail?.text || "")
     setIsEditingDraft(currentFolder === "drafts")
     setShowReply(false)
+    setShowForwardDialog(false)
+    setForwardTo("")
+    setForwardSubject(mail ? `Fwd: ${mail.subject}` : "")
+    setForwardBody(mail ? `\n\n---------- Forwarded message ----------\nFrom: ${mail?.name} <${mail?.email}>\nDate: ${mail ? format(new Date(mail.date), "PPpp") : ""}\nSubject: ${mail?.subject}\n\n${mail?.text}` : "")
   }, [mail, currentFolder])
 
   if (!mail) {
@@ -159,6 +189,38 @@ export function MailView({
   }
 
   const handleMoveToJunk = () => onMoveToJunk?.(mail.id)
+
+  const handleOpenForward = () => {
+    setShowForwardDialog(true)
+    setForwardTo("")
+    setForwardSubject(mail ? `Fwd: ${mail.subject}` : "")
+    setForwardBody(mail ? `\n\n---------- Forwarded message ----------\nFrom: ${mail?.name} <${mail?.email}>\nDate: ${mail ? format(new Date(mail.date), "PPpp") : ""}\nSubject: ${mail?.subject}\n\n${mail?.text}` : "")
+  }
+
+  const handleSendForward = async () => {
+    if (!onForward || !mail) return
+    setIsForwarding(true)
+    await onForward({
+      to: forwardTo,
+      subject: forwardSubject,
+      body: forwardBody,
+      originalMail: mail,
+    })
+    setIsForwarding(false)
+    setShowForwardDialog(false)
+    setForwardTo("")
+    setForwardSubject("")
+    setForwardBody("")
+  }
+
+  const handleAddLabel = () => {
+    if (onAddLabel && mail && newLabelName.trim()) {
+      onAddLabel({ name: newLabelName.trim(), color: newLabelColor }, mail.id)
+      setShowLabelDialog(false)
+      setNewLabelName("")
+      setNewLabelColor("#1976d2")
+    }
+  }
 
   const isInTrash = currentFolder === "trash"
   const isInArchive = currentFolder === "archive"
@@ -300,7 +362,7 @@ export function MailView({
               <ReplyAll className="h-4 w-4" />
               <span className="sr-only">Reply all</span>
             </Button>
-            <Button variant="ghost" size="icon" disabled={!mail}>
+            <Button variant="ghost" size="icon" disabled={!mail} onClick={handleOpenForward}>
               <Forward className="h-4 w-4" />
               <span className="sr-only">Forward</span>
             </Button>
@@ -321,7 +383,9 @@ export function MailView({
                   <Reply className="mr-2 h-4 w-4" />
                   Start thread
                 </DropdownMenuItem>
-                <DropdownMenuItem>Add label</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowLabelDialog(true)}>
+                  Add label
+                </DropdownMenuItem>
                 <DropdownMenuItem>Mute thread</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -334,106 +398,135 @@ export function MailView({
               const original = mails.find((m) => m.id === mail.replyToId)
               if (!original) return null
               return (
-                <div className="mb-6 rounded border bg-muted p-4">
-                  <div className="font-semibold mb-1">{original.subject}</div>
-                  <div className="text-xs text-muted-foreground mb-2">
-                    From: {original.name} ({original.email})
+                <div className="mb-6">
+                  <div className="rounded border bg-muted p-4 mb-2">
+                    <div className="font-semibold mb-1">{original.subject}</div>
+                    <div className="text-xs text-muted-foreground mb-2">
+                      From: {original.name} ({original.email})
+                    </div>
+                    <div className="whitespace-pre-line text-sm">
+                      {original.text}
+                    </div>
                   </div>
-                  <div className="whitespace-pre-line text-sm">
-                    {original.text}
+                  <div className="flex items-center my-2 justify-center">
+                    <span className="text-xs px-2 py-1 rounded bg-primary/10 text-primary font-semibold">Forwarded</span>
+                  </div>
+                  <div className="rounded border bg-background p-4">
+                    <div className="mb-4 flex items-center gap-4">
+                      <Avatar>
+                        {mail.avatar && (
+                          <AvatarImage src={mail.avatar} alt={mail.name} />
+                        )}
+                        <AvatarFallback>{mail.avatarFallback}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-semibold">{mail.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {mail.email}
+                        </div>
+                      </div>
+                      <div className="ml-auto text-xs text-muted-foreground">
+                        {format(new Date(mail.date), "PPpp")}
+                      </div>
+                    </div>
+                    <div className="mb-4 whitespace-pre-line text-sm">{mail.text}</div>
                   </div>
                 </div>
               )
             })()
           )}
-          <div className="mb-4 flex items-center gap-4">
-            <Avatar>
-              {mail.avatar && (
-                <AvatarImage src={mail.avatar} alt={mail.name} />
-              )}
-              <AvatarFallback>{mail.avatarFallback}</AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="font-semibold">{mail.name}</div>
-              <div className="text-xs text-muted-foreground">
-                {mail.email}
-              </div>
-            </div>
-            <div className="ml-auto text-xs text-muted-foreground">
-              {format(new Date(mail.date), "PPpp")}
-            </div>
-          </div>
-          {currentFolder === "drafts" ? (
-            isEditingDraft ? (
-              <div className="mb-4 space-y-4">
-                <input
-                  className="w-full rounded border px-3 py-2 text-base bg-background text-foreground"
-                  value={draftSubject}
-                  onChange={(e) => setDraftSubject(e.target.value)}
-                  placeholder="Subject"
-                />
-                <Textarea
-                  value={draftBody}
-                  onChange={(e) => setDraftBody(e.target.value)}
-                  placeholder="Type your email here..."
-                  rows={8}
-                />
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleSaveDraft}
-                    disabled={
-                      !draftSubject.trim() && !draftBody.trim()
-                    }
-                  >
-                    Save Draft
-                  </Button>
-                  <Button
-                    onClick={handleSendDraft}
-                    disabled={
-                      !draftSubject.trim() || !draftBody.trim()
-                    }
-                  >
-                    Send
-                  </Button>
-                  <Button variant="outline" onClick={handleAIWrite}>
-                    <Bot className="h-4 w-4 mr-2" />
-                    AI Write Email
-                  </Button>
+          {!(currentFolder === "sent" && mail.replyToId && mails.length > 0) && (
+            <div className="mb-4 flex items-center gap-4">
+              <Avatar>
+                {mail.avatar && (
+                  <AvatarImage src={mail.avatar} alt={mail.name} />
+                )}
+                <AvatarFallback>{mail.avatarFallback}</AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-semibold">{mail.name}</div>
+                <div className="text-xs text-muted-foreground">
+                  {mail.email}
                 </div>
               </div>
-            ) : (
-              <div className="mb-4 space-y-2 relative">
-                <div className="font-semibold">{draftSubject}</div>
-                <div
-                  ref={draftBodyRef}
-                  className="whitespace-pre-line text-sm max-h-[300px] overflow-hidden relative"
-                  style={{ position: "relative" }}
-                >
-                  {draftBody}
-                  {showOverlay && (
-                    <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-background/95 to-transparent flex items-end justify-center pointer-events-none" />
+              <div className="ml-auto text-xs text-muted-foreground">
+                {format(new Date(mail.date), "PPpp")}
+              </div>
+            </div>
+          )}
+          {!(currentFolder === "sent" && mail.replyToId && mails.length > 0) && (
+            currentFolder === "drafts" ? (
+              isEditingDraft ? (
+                <div className="mb-4 space-y-4">
+                  <input
+                    className="w-full rounded border px-3 py-2 text-base bg-background text-foreground"
+                    value={draftSubject}
+                    onChange={(e) => setDraftSubject(e.target.value)}
+                    placeholder="Subject"
+                  />
+                  <Textarea
+                    value={draftBody}
+                    onChange={(e) => setDraftBody(e.target.value)}
+                    placeholder="Type your email here..."
+                    rows={8}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleSaveDraft}
+                      disabled={
+                        !draftSubject.trim() && !draftBody.trim()
+                      }
+                    >
+                      Save Draft
+                    </Button>
+                    <Button
+                      onClick={handleSendDraft}
+                      disabled={
+                        !draftSubject.trim() || !draftBody.trim()
+                      }
+                    >
+                      Send
+                    </Button>
+                    <Button variant="outline" onClick={handleAIWrite}>
+                      <Bot className="h-4 w-4 mr-2" />
+                      AI Write Email
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-4 space-y-2 relative">
+                  <div className="font-semibold">{draftSubject}</div>
+                  <div
+                    ref={draftBodyRef}
+                    className="whitespace-pre-line text-sm max-h-[300px] overflow-hidden relative"
+                    style={{ position: "relative" }}
+                  >
+                    {draftBody}
+                    {showOverlay && (
+                      <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-background/95 to-transparent flex items-end justify-center pointer-events-none" />
+                    )}
+                  </div>
+                  {showOverlay ? (
+                    <button
+                      className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded bg-primary text-primary-foreground shadow-lg pointer-events-auto"
+                      onClick={() => setIsEditingDraft(true)}
+                    >
+                      Edit Email
+                    </button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsEditingDraft(true)}
+                    >
+                      Edit
+                    </Button>
                   )}
                 </div>
-                {showOverlay ? (
-                  <button
-                    className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded bg-primary text-primary-foreground shadow-lg pointer-events-auto"
-                    onClick={() => setIsEditingDraft(true)}
-                  >
-                    Edit Email
-                  </button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsEditingDraft(true)}
-                  >
-                    Edit
-                  </Button>
-                )}
-              </div>
+              )
+            ) : (
+              <div className="mb-4 whitespace-pre-line text-sm">{mail.text}</div>
             )
-          ) : (
-            <div className="mb-4 whitespace-pre-line text-sm">{mail.text}</div>
           )}
           {mail.attachments && mail.attachments.length > 0 && (
             <>
@@ -509,6 +602,102 @@ export function MailView({
             </div>
           </div>
         )}
+        {/* Forward Dialog */}
+        <Dialog open={showForwardDialog} onOpenChange={setShowForwardDialog}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Forward Email</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                type="email"
+                placeholder="Recipient's email address"
+                value={forwardTo}
+                onChange={e => setForwardTo(e.target.value)}
+                autoFocus
+              />
+              <Input
+                placeholder="Subject"
+                value={forwardSubject}
+                onChange={e => setForwardSubject(e.target.value)}
+              />
+              <Textarea
+                rows={8}
+                value={forwardBody}
+                onChange={e => setForwardBody(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleSendForward}
+                disabled={!forwardTo.trim() || !forwardSubject.trim() || !forwardBody.trim() || isForwarding}
+              >
+                {isForwarding ? "Sending..." : "Send"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {/* Label Dialog */}
+        <Dialog open={showLabelDialog} onOpenChange={setShowLabelDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Add Label</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm">Select existing label:</label>
+                <select
+                  className="border rounded px-2 py-1 text-sm bg-background"
+                  value={newLabelName && labels.some(l => l.name === newLabelName) ? newLabelName : ''}
+                  onChange={e => {
+                    const selected = labels.find(l => l.name === e.target.value)
+                    if (selected) {
+                      setNewLabelName(selected.name)
+                      setNewLabelColor(selected.color)
+                    }
+                  }}
+                >
+                  <option value="">-- Select label --</option>
+                  {labels.map(label => (
+                    <option key={label.name} value={label.name}>{label.name}</option>
+                  ))}
+                </select>
+              </div>
+              <Input
+                placeholder="Label name"
+                value={newLabelName}
+                onChange={e => setNewLabelName(e.target.value)}
+                autoFocus
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-sm">Color:</span>
+                <div className="flex gap-2">
+                  {softColors.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className={`w-7 h-7 rounded-full border-2 flex items-center justify-center focus:outline-none ${newLabelColor === color ? 'border-black dark:border-white ring-2 ring-primary' : 'border-transparent'}`}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setNewLabelColor(color)}
+                    >
+                      {newLabelColor === color && (
+                        <span className="w-3 h-3 rounded-full bg-white border border-black dark:border-white" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleAddLabel}
+                disabled={!newLabelName.trim()}
+              >
+                Add Label
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
   )

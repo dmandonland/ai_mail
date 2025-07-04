@@ -146,7 +146,7 @@ export function MailComposeDialog({ open, onOpenChange, onSaveDraft }: MailCompo
             <Button variant="outline" className="bg-background text-foreground" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSend}>
+            <Button className="bg-[#A24AD9] text-primary-foreground" onClick={handleSend}>
               Send <CornerDownLeft className="ml-2 h-4 w-4" />
             </Button>
           </div>
