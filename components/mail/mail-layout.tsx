@@ -320,8 +320,8 @@ export function MailLayout({
               <ThemeToggle />
             </header>
             {isNavOpen && (
-              <div className="absolute top-14 left-0 w-full h-full bg-background/80 backdrop-blur-sm">
-                <div className="w-64 bg-background border-r h-full p-2 flex flex-col">
+              <div className="absolute top-14 z-5 left-0 w-full h-full bg-background/60 backdrop-blur-sm">
+                <div className="sm:max-md:max-w-screen border-r h-full p-2 flex flex-col">
                   <AccountSwitcher
                     isCollapsed={false}
                     accounts={defaultAccounts}
