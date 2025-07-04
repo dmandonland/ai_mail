@@ -274,7 +274,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-base">Show Online Status</Label>
-                  <p className="text-sm text-muted-foreground">Let others see when you're online</p>
+                  <p className="text-sm text-muted-foreground">Let others see when you&apos;re online</p>
                 </div>
                 <Switch
                   checked={privacy.showOnlineStatus}
