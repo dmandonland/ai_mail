@@ -270,7 +270,7 @@ export const mails: Mail[] = [
   },
   // New emails for Bob Marley (account-2)
   {
-    id: "mail-17",
+    id: "mail-27",
     accountId: "account-2",
     name: "CloudServices Inc.",
     email: "security@cloudservices.com",
@@ -377,7 +377,7 @@ export const mails: Mail[] = [
     starred: true,
   },
   {
-    id: "mail-18",
+    id: "mail-38",
     accountId: "account-2",
     name: "Spotify Premium",
     email: "no-reply@spotify.com",
@@ -474,7 +474,7 @@ export const mails: Mail[] = [
     starred: false,
   },
   {
-    id: "mail-18",
+    id: "mail-28",
     accountId: "account-2",
     name: "Charity Foundation",
     email: "events@charity.org",
