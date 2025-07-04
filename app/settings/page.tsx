@@ -286,7 +286,7 @@ export default function SettingsPage() {
 
           {/* Save Button */}
           <div className="flex justify-end">
-            <Button onClick={handleSave} className="min-w-32">
+            <Button onClick={handleSave} className="min-w-32 bg-custom-collor text-white hover:bg-custom-collor/90">
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
