@@ -43,8 +43,8 @@ interface MailLayoutProps {
 }
 
 export function MailLayout({
-  defaultLayout = [265, 440, 655],
-  defaultCollapsed = false,
+  defaultLayout = [265, 440, 1024],
+  defaultCollapsed = true,
   navCollapsedSize = 4,
 }: MailLayoutProps) {
   const isMobile = useMobile()
@@ -326,7 +326,7 @@ export function MailLayout({
                     isCollapsed={false}
                     accounts={defaultAccounts}
                     selectedAccount={currentAccount}
-                    onAccountChange={handleAccountChange}
+                    onAccountChangeAction={handleAccountChange}
                   />
                   <Separator className="my-2" />
                   <MailNavLinks
@@ -348,13 +348,15 @@ export function MailLayout({
                 </div>
               </form>
             </div>
-            <MailList
-              key={refreshKey}
-              items={filteredMails}
-              selectedMail={selectedMailId}
-              onSelectMail={handleSelectMail}
-              labels={labels}
-            />
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <MailList
+                key={refreshKey}
+                items={filteredMails}
+                selectedMail={selectedMailId}
+                onSelectMail={handleSelectMail}
+                labels={labels}
+              />
+            </div>
             <Button
               className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg"
               onClick={() => setIsComposeOpen(true)}
@@ -410,13 +412,13 @@ export function MailLayout({
           )}
         >
           <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between gap-2 pl-6 pr-2 py-2 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0">
+            <div className="flex items-center justify-between gap-2 pl-4 pr-2 py-2 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0">
               <div className='flex items-center h-12 w-full'>
                 <AccountSwitcher
                   isCollapsed={isCollapsed}
                   accounts={defaultAccounts}
                   selectedAccount={currentAccount}
-                  onAccountChange={handleAccountChange}
+                  onAccountChangeAction={handleAccountChange}
                 />
               </div>
             </div>
@@ -453,24 +455,40 @@ export function MailLayout({
                 onSelectFolder={setSelectedFolder}
               />
               {/* Labels Section */}
+             {/* Replace the current labels section with this */}
               <div className="mt-6 px-2">
-                <div className="text-xs font-semibold uppercase tracking-wide mb-2 text-muted-foreground">Labels</div>
+                {!isCollapsed && (
+                  <div className="text-xs font-semibold uppercase tracking-wide mb-2 text-muted-foreground">Labels</div>
+                )}
                 <div className="flex flex-col gap-1">
-                  <button
-                    className={`text-left px-2 py-1 rounded hover:bg-muted text-sm ${labelFilter === 'all' ? 'font-bold' : ''}`}
-                    onClick={() => setLabelFilter('all')}
-                  >
-                    All
-                  </button>
-                  {labels.length === 0 && <span className="text-xs text-muted-foreground">No labels</span>}
+                  {!isCollapsed && (
+                    <button
+                      className={`text-left px-2 py-1 rounded hover:bg-muted text-sm ${labelFilter === 'all' ? 'font-bold' : ''}`}
+                      onClick={() => setLabelFilter('all')}
+                    >
+                      All
+                    </button>
+                  )}
+                  {labels.length === 0 && !isCollapsed && (
+                    <span className="text-xs text-muted-foreground">No labels</span>
+                  )}
                   {labels.map(label => (
                     <button
                       key={label.name}
                       className={`text-left px-2 py-1 rounded hover:bg-muted text-sm flex items-center gap-2 ${labelFilter === label.name ? 'font-bold' : ''}`}
                       onClick={() => setLabelFilter(label.name)}
                     >
-                      <span className="inline-block w-2 h-2 rounded-full mr-2" style={{ background: label.color }} />
-                      {label.name}
+                      <span 
+                        className="inline-block w-2 h-2 rounded-full" 
+                        style={{ background: label.color }}
+                        title={isCollapsed ? label.name : undefined}
+                      />
+                      {!isCollapsed && (
+                        <>
+                          <span className="mr-2" />
+                          {label.name}
+                        </>
+                      )}
                     </button>
                   ))}
                 </div>
