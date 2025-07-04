@@ -32,6 +32,18 @@ function Infinityshape() {
           after:left-auto after:h-[60px] after:w-[60px] after:border-[20px] 
         after:border-black after:border-solid after:rounded-t-[50px] 
           after:rounded-r-[50px] after:rounded-b-0 after:rounded-l-0 
+          after:rotate-45 after:box-content 
+          
+          dark:before:content-[''] before:absolute before:top-0 before:left-0
+          before:h-[60px] before:w-[60px] before:border-[20px] 
+        before:border-white before:border-solid before:rounded-t-[50px]
+          before:rounded-tr-[50px] before:rounded-b-0 before:rounded-l-[50px] 
+          before:-rotate-45 before:box-content
+          
+          dark:after:content-[''] after:absolute after-top-0 after:right-0
+          after:left-auto after:h-[60px] after:w-[60px] after:border-[20px] 
+        after:border-white after:border-solid after:rounded-t-[50px]
+          after:rounded-r-[50px] after:rounded-b-0 after:rounded-l-0
           after:rotate-45 after:box-content">
         </div>
       </div>
