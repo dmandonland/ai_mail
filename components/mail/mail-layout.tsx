@@ -308,11 +308,11 @@ export function MailLayout({
 
   if (isMobile) {
     return (
-      <div className="h-full flex flex-col">
+      <div className="h-screen flex flex-col">
         {mobileView === "list" ? (
           <>
             <div className="z-5">
-              <header className="flex items-center justify-between p-2 border-b">
+              <header className="flex items-center justify-between p-2 border-b bg-background z-10">
                 <Button variant="ghost" size="icon" onClick={() => setIsNavOpen(!isNavOpen)}>
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Open navigation</span>
@@ -341,7 +341,7 @@ export function MailLayout({
                   </div>
                 </div>
               )}
-                <div className="bg-background/95 p-4 sticky top-0 z-10">
+                <div className="bg-background/95 p-4 sticky top-0 z-10 border-b">
                   <form>
                     <div className="relative">
                       <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -350,7 +350,7 @@ export function MailLayout({
                   </form>
                 </div>
             </div>
-            <div className="flex-1 flex-col flex min-h-0 sm:max-lg:overflow-auto">
+            <div className="flex-1 flex-col flex min-h-0 overflow-hidden">
               <MailList
                 key={refreshKey}
                 items={filteredMails}
@@ -360,7 +360,7 @@ export function MailLayout({
               />
             </div>
             <Button
-              className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg"
+              className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-10"
               onClick={() => setIsComposeOpen(true)}
             >
               <PenSquare className="h-6 w-6" />
