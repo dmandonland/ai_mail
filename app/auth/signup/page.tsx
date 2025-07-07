@@ -1,83 +1,94 @@
-// src/app/signup/page.jsx
+'use client';
 
-import {
-  getLoggedInUser
-} from "@/lib/server/appwrite";
-// src/app/signup/page.jsx
+import { useState } from 'react';
+import { account } from '@/lib/server/appwrite';
+import { ID } from 'appwrite';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import Link from 'next/link';
 
-// previous imports ...
+export default function SignupPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const router = useRouter();
 
-import { ID } from "node-appwrite";
-import { createAdminClient } from "@/lib/server/appwrite";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import {signUpWithGithub} from "@/lib/server/oauth";
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
 
-export async function signUpWithEmail(formData: FormData): Promise<void> {
-    "use server";
-
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    const name = formData.get("name") as string;
-
-    const { account }: { account: import("node-appwrite").Account } = await createAdminClient();
-    const user: unknown = await getLoggedInUser();
-    if (user) redirect("/account");
-
-    await account.create(ID.unique(), email, password, name);
-    const session: { secret: string } = await account.createEmailPasswordSession(email, password);
-
-    (await cookies()).set("my-custom-session", session.secret, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "strict",
-        secure: true,
-    });
-
-    redirect("/account");
-}
-
-// the SignUpPage component ...
-import React from "react";
-
-export default async function SignUpPage() {
-  const user = await getLoggedInUser();
-  if (user) redirect("/account");
+    try {
+      await account.create(ID.unique(), email, password, name);
+      await account.createSession(email, password); // auto-login
+      router.push('/dashboard'); // redirect after signup
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'message' in err) {
+        setError((err as { message?: string }).message || 'Signup failed');
+      } else {
+        setError('Signup failed');
+      }
+    }
+  };
 
   return (
-    <>
-      <form action={signUpWithEmail}>
-        <input
-          id="email"
-          name="email"
-          placeholder="Email"
-          type="email"
-        />
-        <input
-          id="password"
-          name="password"
-          placeholder="Password"
-          minLength={8}
-          type="password"
-        />
-        <input
-          id="name"
-          name="name"
-          placeholder="Name"
-          type="text"
-        />
-        <button type="submit">Sign up</button>
+    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+      <form onSubmit={handleSignup}>
+        <Card className="w-full max-w-sm">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Sign Up</CardTitle>
+            <CardDescription>Create a new account to get started.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {error && <p className="rounded bg-red-100 p-2 text-red-600">{error}</p>}
+            <div className="grid gap-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Create a password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full bg-[#a24ad9]">
+              Create Account
+            </Button>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <span className="text-sm text-muted-foreground">
+              Already have an account?{' '}
+              <Link href="/auth/sign-in" className="text-[#a24ad9] hover:underline">Sign In</Link>
+            </span>
+          </CardFooter>
+        </Card>
       </form>
-      
-
-      {/* ... existing form */}
-      <form action={signUpWithGithub}>
-        <button type="submit">Sign up with GitHub</button>
-      </form>
-
-
-    </>
+    </div>
   );
 }
-
-

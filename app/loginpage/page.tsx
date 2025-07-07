@@ -15,13 +15,19 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
 const LoginPage = () => {
-  const [loggedInUser, setLoggedInUser] = useState<any>(null);
+  interface User {
+    $id: string;
+    name: string;
+    email: string;
+    // Add other properties returned by account.get() as needed
+  }
+  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
   const login = async (email: string, password: string) => {
-    const session = await account.createEmailPasswordSession(email, password);
+    await account.createEmailPasswordSession(email, password);
     setLoggedInUser(await account.get());
   };
 
