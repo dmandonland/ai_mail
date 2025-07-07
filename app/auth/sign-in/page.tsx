@@ -90,9 +90,11 @@ export default function SignInPage() {
                 </p>
               </div>
             </div>
-            <Button type="submit" className="w-full bg-[#a24ad9]" disabled={!allValid}>
-              Sign In
-            </Button>
+            <Link href="../mail-client">
+              <Button type="submit" className="w-full bg-[#a24ad9]" disabled={!allValid}>
+                Sign In
+              </Button>
+            </Link>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />

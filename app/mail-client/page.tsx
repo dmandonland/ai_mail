@@ -7,6 +7,7 @@ export default async function MailPage() {
   const cookiesStore = await cookies()
   const layout = cookiesStore.get("react-resizable-panels:layout")
   const collapsed = cookiesStore.get("react-resizable-panels:collapsed")
+ 
 
   const defaultLayout = layout ? JSON.parse(layout.value) : undefined
   const defaultCollapsed = collapsed ? JSON.parse(collapsed.value) : undefined

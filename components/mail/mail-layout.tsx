@@ -311,44 +311,46 @@ export function MailLayout({
       <div className="h-full flex flex-col">
         {mobileView === "list" ? (
           <>
-            <header className="flex items-center justify-between p-2 border-b">
-              <Button variant="ghost" size="icon" onClick={() => setIsNavOpen(!isNavOpen)}>
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Open navigation</span>
-              </Button>
-              <h1 className="text-lg font-bold capitalize">{selectedFolder}</h1>
-              <ThemeToggle />
-            </header>
-            {isNavOpen && (
-              <div className="absolute top-14 z-5 left-0 w-full h-full bg-background/60 backdrop-blur-sm">
-                <div className="sm:max-md:max-w-screen border-r h-full p-2 flex flex-col">
-                  <AccountSwitcher
-                    isCollapsed={false}
-                    accounts={defaultAccounts}
-                    selectedAccount={currentAccount}
-                    onAccountChangeAction={handleAccountChange}
-                  />
-                  <Separator className="my-2" />
-                  <MailNavLinks
-                    isCollapsed={false}
-                    selectedFolder={selectedFolder}
-                    onSelectFolder={(folder) => {
-                      setSelectedFolder(folder)
-                      setIsNavOpen(false)
-                    }}
-                  />
+            <div className="z-5">
+              <header className="flex items-center justify-between p-2 border-b">
+                <Button variant="ghost" size="icon" onClick={() => setIsNavOpen(!isNavOpen)}>
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Open navigation</span>
+                </Button>
+                <h1 className="text-lg font-bold capitalize">{selectedFolder}</h1>
+                <ThemeToggle />
+              </header>
+              {isNavOpen && (
+                <div className="absolute top-14 z-20 left-0 w-full h-full bg-background/60 backdrop-blur-sm">
+                  <div className="sm:max-md:max-w-screen border-r h-full p-2 flex flex-col">
+                    <AccountSwitcher
+                      isCollapsed={false}
+                      accounts={defaultAccounts}
+                      selectedAccount={currentAccount}
+                      onAccountChangeAction={handleAccountChange}
+                    />
+                    <Separator className="my-2" />
+                    <MailNavLinks
+                      isCollapsed={false}
+                      selectedFolder={selectedFolder}
+                      onSelectFolder={(folder) => {
+                        setSelectedFolder(folder)
+                        setIsNavOpen(false)
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
-            <div className="bg-background/95 p-4">
-              <form>
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search" className="pl-8" />
+              )}
+                <div className="bg-background/95 p-4 sticky top-0 z-10">
+                  <form>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input placeholder="Search" className="pl-8" />
+                    </div>
+                  </form>
                 </div>
-              </form>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="flex-1 flex-col flex min-h-0 sm:max-lg:overflow-auto">
               <MailList
                 key={refreshKey}
                 items={filteredMails}
@@ -412,7 +414,7 @@ export function MailLayout({
           )}
         >
           <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between gap-2 pl-4 pr-2 py-2 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0">
+            <div className="flex items-center justify-between gap-2 pl-3 pr-2 py-2 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0">
               <div className='flex items-center h-12 w-full'>
                 <AccountSwitcher
                   isCollapsed={isCollapsed}
