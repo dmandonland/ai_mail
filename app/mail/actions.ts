@@ -28,27 +28,27 @@ export async function sendEmailAction(formData: FormData) {
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
   // In a real scenario:
-  // try {
-  //   const transporter = nodemailer.createTransport({
-  //     host: process.env.SMTP_HOST,
-  //     port: parseInt(process.env.SMTP_PORT || "587"),
-  //     secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-  //     auth: {
-  //       user: process.env.SMTP_USER,
-  //       pass: process.env.SMTP_PASS,
-  //     },
-  //   });
-  //   await transporter.sendMail({
-  //     from: `"My App" <noreply@example.com>`, // Sender address
-  //     to: to,
-  //     subject: subject,
-  //     html: body.replace(/\n/g, '<br/>'), // Basic HTML conversion
-  //   });
-  //   return { success: true, message: "Email sent successfully!" };
-  // } catch (error) {
-  //   console.error("Failed to send email:", error);
-  //   return { success: false, message: "Failed to send email." };
-  // }
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || "587"),
+      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+    await transporter.sendMail({
+      from: `"My App" <${process.env.SMTP_FROM_EMAIL}>`, // Sender address
+      to: to,
+      subject: subject,
+      html: body.replace(/\n/g, '<br/>'), // Basic HTML conversion
+    });
+    return { success: true, message: "Email sent successfully!" };
+  } catch (error) {
+    console.error("Failed to send email:", error);
+    return { success: false, message: "Failed to send email." };
+  }
 
   return { success: true, message: "Email processed (simulated)." }
 }

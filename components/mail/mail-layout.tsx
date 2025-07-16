@@ -306,6 +306,31 @@ export function MailLayout({
     setUserLabels(labels => labels.filter(l => l.name !== name))
   }
 
+  // Calculate counts for each folder
+  const folderCounts: Record<string, number> = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    const now = new Date();
+    mails.forEach(mail => {
+      if (mail.accountId !== selectedAccount) return;
+      // Inbox: count unread
+      if (mail.folder === "inbox") {
+        counts["inbox"] = (counts["inbox"] || 0) + (!mail.read ? 1 : 0);
+      }
+      // Sent: count sent in last 24h
+      if (mail.folder === "sent") {
+        const sentDate = new Date(mail.date);
+        if ((now.getTime() - sentDate.getTime()) < 24 * 60 * 60 * 1000) {
+          counts["sent"] = (counts["sent"] || 0) + 1;
+        }
+      }
+      // Trash, Junk, Drafts, Archive: count all mails in folder
+      if (["trash", "junk", "drafts", "archive"].includes(mail.folder)) {
+        counts[mail.folder] = (counts[mail.folder] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [mails, selectedAccount])
+
   if (isMobile) {
     return (
       <div className="h-screen flex flex-col">
@@ -333,10 +358,11 @@ export function MailLayout({
                     <MailNavLinks
                       isCollapsed={false}
                       selectedFolder={selectedFolder}
-                      onSelectFolder={(folder) => {
+                      onSelectFolderAction={(folder) => {
                         setSelectedFolder(folder)
                         setIsNavOpen(false)
                       }}
+                      counts={folderCounts}
                     />
                   </div>
                 </div>
@@ -454,7 +480,8 @@ export function MailLayout({
               <MailNavLinks
                 isCollapsed={isCollapsed}
                 selectedFolder={selectedFolder}
-                onSelectFolder={setSelectedFolder}
+                onSelectFolderAction={setSelectedFolder}
+                counts={folderCounts}
               />
               {/* Labels Section */}
              {/* Replace the current labels section with this */}
