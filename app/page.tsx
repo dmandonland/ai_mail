@@ -1,16 +1,15 @@
 import LogoEnter from "@/components/motion/enteranimation"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { createClient } from '@/utils/supabase/server'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/server/supabase'
+
 
 
 
 
 export default function HomePage() {
 
-  const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = createClient()
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">

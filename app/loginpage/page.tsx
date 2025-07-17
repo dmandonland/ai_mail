@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { account, ID } from "@/lib/server/appwrite.js";
+import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,30 +14,53 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 const LoginPage = () => {
   interface User {
-    $id: string;
-    name: string;
+    id: string;
     email: string;
-    // Add other properties returned by account.get() as needed
+    // Add other properties as needed
   }
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [error, setError] = useState("");
 
   const login = async (email: string, password: string) => {
-    await account.createEmailPasswordSession(email, password);
-    setLoggedInUser(await account.get());
+    setError("");
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      setLoggedInUser({ id: data.user.id, email: data.user.email ?? "" });
+    }
   };
 
   const register = async () => {
-    await account.create(ID.unique(), email, password, name);
-    login(email, password);
+    setError("");
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name } },
+    });
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    // Optionally auto-login after registration
+    await login(email, password);
   };
 
   const logout = async () => {
-    await account.deleteSession("current");
+    await supabase.auth.signOut();
     setLoggedInUser(null);
   };
 
@@ -47,7 +70,7 @@ const LoginPage = () => {
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Welcome</CardTitle>
-            <CardDescription>Logged in as {loggedInUser.name}</CardDescription>
+            <CardDescription>Logged in as {loggedInUser.email}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button
@@ -109,12 +132,13 @@ const LoginPage = () => {
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
+            {error && <div className="text-red-500 text-sm">{error}</div>}
             <Button
               type="button"
               className="w-full bg-[#a24ad9]"
               onClick={async () => {
                 await login(email, password);
-                window.location.href = "/mail-client";
+                if (!error) window.location.href = "/mail-client";
               }}
             >
               Login

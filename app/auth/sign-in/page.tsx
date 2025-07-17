@@ -7,11 +7,15 @@ import { Label } from "@/components/ui/label"
 import { ChromeIcon, CheckCircle2, CircleDashed } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/client/supabase"
 import { useState, useEffect } from "react"
 
 export default function SignInPage() {
   const router = useRouter()
-  const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [validators, setValidators] = useState({
     length: false,
     uppercase: false,
@@ -34,24 +38,24 @@ export default function SignInPage() {
     setPassword(e.target.value)
   }
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
+
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      
-      if (response.ok) {
-        router.push('/inbox');
-      } else {
-        const error = await response.json();
-        alert(error.error);
-      }
-    } catch (err) {
-      alert('Login failed');
+      if (error) throw error;
+      // Update this route to redirect to an authenticated route. The user already has an active session.
+      router.push("/protected");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -74,7 +78,7 @@ export default function SignInPage() {
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="m@example.com" required />
+              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>

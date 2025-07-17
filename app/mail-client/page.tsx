@@ -1,20 +1,20 @@
 
 
 import { MailLayout } from "@/components/mail/mail-layout"
+import { createClient } from "@/lib/server/supabase"
 import { cookies } from "next/headers"
-import { account }  from "@/lib/server/apprwite"
+import { redirect } from "next/navigation"
 
 export default async function MailPage() {
   const cookiesStore = await cookies()
   const layout = cookiesStore.get("react-resizable-panels:layout")
   const collapsed = cookiesStore.get("react-resizable-panels:collapsed")
-  try {
-    const user = await account.get();
-    return { props: { user } };
-  } catch (error) {
-    return {
-      redirect: { destination: '../auth/sign-in', permanent: false },
-    };
+
+  // Supabase authentication
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    redirect("/auth/sign-in")
   }
 
   const defaultLayout = layout ? JSON.parse(layout.value) : undefined
