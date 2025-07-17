@@ -1,5 +1,5 @@
 "use server"
-
+import nodemailer from "nodemailer";
 // This is a server action to simulate sending an email.
 // In a real application, you would use a library like Nodemailer
 // and connect to an SMTP server using credentials from environment variables.

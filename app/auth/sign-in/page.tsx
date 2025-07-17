@@ -35,11 +35,25 @@ export default function SignInPage() {
   }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (allValid) {
-      router.push("../mail-client")
+    e.preventDefault();
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      if (response.ok) {
+        router.push('/inbox');
+      } else {
+        const error = await response.json();
+        alert(error.error);
+      }
+    } catch (err) {
+      alert('Login failed');
     }
-  }
+  };
 
   const getValidatorIcon = (isValid: boolean) => {
     return isValid ? (
