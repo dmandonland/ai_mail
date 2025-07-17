@@ -35,6 +35,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
+          data: { name },
           emailRedirectTo: `${window.location.origin}/protected`,
         },
       });
@@ -101,7 +102,7 @@ export default function SignupPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full bg-[#a24ad9]" disabled={isLoading}>
+            <Button type="submit" className="w-full cursor-pointer bg-[#a24ad9]" disabled={isLoading}>
               {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
           </CardContent>
