@@ -50,7 +50,7 @@ export default function SignupPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <form onSubmit={handleSignup}>
-        <Card className="w-full max-w-sm">
+        <Card className="w-full max-w-96">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Sign Up</CardTitle>
             <CardDescription>Create a new account to get started.</CardDescription>
@@ -90,8 +90,19 @@ export default function SignupPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full bg-[#a24ad9]">
-              Create Account
+            <div className="grid gap-2">
+              <Label htmlFor="repeatPassword">Repeat Password</Label>
+              <Input
+                id="repeatPassword"
+                type="password"
+                placeholder="Repeat your password"
+                value={repeatPassword}
+                onChange={e => setRepeatPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full bg-[#a24ad9]" disabled={isLoading}>
+              {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
           </CardContent>
           <CardFooter className="flex justify-center">

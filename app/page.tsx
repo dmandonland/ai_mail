@@ -1,7 +1,7 @@
 import LogoEnter from "@/components/motion/enteranimation"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { createClient } from '@/lib/server/supabase'
+
 
 
 
@@ -9,7 +9,6 @@ import { createClient } from '@/lib/server/supabase'
 
 export default function HomePage() {
 
-  const supabase = createClient()
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">

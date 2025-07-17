@@ -12,7 +12,7 @@ import { useState, useEffect } from "react"
 
 export default function SignInPage() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -108,11 +108,25 @@ export default function SignInPage() {
                 </p>
               </div>
             </div>
+            {error && (
+              <div className="text-red-500 text-sm mb-2">
+                {error}
+              </div>
+            )}
             <Link href="../mail-client">
-              <Button type="submit" className="w-full bg-[#a24ad9]" disabled={!allValid}>
-                Sign In
+              <Button
+                type="submit"
+                className="w-full bg-[#a24ad9]"
+                disabled={!allValid || isLoading}
+              >
+                {isLoading ? "Signing In..." : "Sign In"}
               </Button>
             </Link>
+            <div className="flex justify-center mt-2">
+              <Link href="/auth/signup" className="text-[#a24ad9] hover:underline text-sm">
+                Don&apos;t have an account? Sign Up
+              </Link>
+            </div>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
