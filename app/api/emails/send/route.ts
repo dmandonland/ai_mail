@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/server/supabase';
+import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 

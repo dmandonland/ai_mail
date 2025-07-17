@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { ChromeIcon, CheckCircle2, CircleDashed } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/client/supabase"
+import { createClient } from "@/utils/supabase/client"
 import { useState, useEffect } from "react"
 
 export default function SignInPage() {
@@ -51,7 +51,7 @@ export default function SignInPage() {
       });
       if (error) throw error;
       // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
+      router.push("/mail-client");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {

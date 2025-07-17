@@ -1,169 +1,110 @@
 "use client";
-import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+
+import { cn } from "@/lib/utils";
+import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-const LoginPage = () => {
-  interface User {
-    id: string;
-    email: string;
-    // Add other properties as needed
-  }
-  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
+export function LoginForm({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-  const login = async (email: string, password: string) => {
-    setError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    const { data } = await supabase.auth.getUser();
-    if (data.user) {
-      setLoggedInUser({ id: data.user.id, email: data.user.email ?? "" });
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      // Update this route to redirect to an authenticated route. The user already has an active session.
+      router.push("/protected");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const register = async () => {
-    setError("");
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } },
-    });
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    // Optionally auto-login after registration
-    await login(email, password);
-  };
-
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setLoggedInUser(null);
-  };
-
-  if (loggedInUser) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background p-4">
-        <Card className="w-full max-w-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome</CardTitle>
-            <CardDescription>Logged in as {loggedInUser.email}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              className="w-full bg-[#a24ad9]"
-              onClick={logout}
-            >
-              Logout
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Sign In / Register</CardTitle>
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your credentials to access or create your account.
+            Enter your email below to login to your account
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
-          <form
-            className="grid gap-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-          >
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+        <CardContent>
+          <form onSubmit={handleLogin}>
+            <div className="flex flex-col gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                  <Link
+                    href="/auth/forgot-password"
+                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Logging in..." : "Login"}
+              </Button>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+            <div className="mt-4 text-center text-sm">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/auth/sign-up"
+                className="underline underline-offset-4"
+              >
+                Sign up
+              </Link>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            {error && <div className="text-red-500 text-sm">{error}</div>}
-            <Button
-              type="button"
-              className="w-full bg-[#a24ad9]"
-              onClick={async () => {
-                await login(email, password);
-                if (!error) window.location.href = "/mail-client";
-              }}
-            >
-              Login
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={register}
-            >
-              Register
-            </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center">
-          <Link
-            href="../auth/forgot-password"
-            className="text-sm text-muted-foreground hover:text-primary"
-          >
-            Forgot your password?
-          </Link>
-        </CardFooter>
       </Card>
     </div>
   );
-};
-
-export default LoginPage;
+}

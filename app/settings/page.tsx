@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,13 +18,15 @@ import { ArrowLeft, Camera, Save, User, Bell, Shield, Palette } from "lucide-rea
 import Link from "next/link"
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [profile, setProfile] = useState({
-    name: "Alicia Keys",
-    username: "alicia.keys",
-    email: "alicia@example.com",
-    bio: "Music artist and creative professional",
+    name: "",
+    username: "",
+    email: "",
+    bio: "",
     avatar: "/placeholder.svg?width=80&height=80",
   })
+  const [loading, setLoading] = useState(true)
 
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -37,6 +41,43 @@ export default function SettingsPage() {
     showOnlineStatus: true,
   })
 
+  useEffect(() => {
+    const supabase = createClient()
+    async function fetchProfile() {
+      // 1. Get the authenticated user
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      if (userError || !userData?.user) {
+        router.push('/login')
+        return
+      }
+
+      // 2. Fetch the user's profile from your DB
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, username, bio, avatar_url')
+        .eq('id', userData.user.id)
+        .single()
+
+      if (profileError) {
+        // Handle error or set defaults
+        setProfile((prev) => ({
+          ...prev,
+          email: userData.user.email || "",
+        }))
+      } else {
+        setProfile({
+          name: profileData.full_name || "",
+          username: profileData.username || "",
+          email: userData.user.email || "",
+          bio: profileData.bio || "",
+          avatar: profileData.avatar_url || "/placeholder.svg?width=80&height=80",
+        })
+      }
+      setLoading(false)
+    }
+    fetchProfile()
+  }, [router])
+
   const handleProfileUpdate = (field: string, value: string) => {
     setProfile((prev) => ({ ...prev, [field]: value }))
   }
@@ -49,11 +90,12 @@ export default function SettingsPage() {
     setPrivacy((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSave = () => {
-    // In a real app, you would save to a database
-    console.log("Saving settings:", { profile, notifications, privacy })
+  const handleSave = async () => {
+    // Will implement update logic here next
     alert("Settings saved successfully!")
   }
+
+  if (loading) return <div>Loading...</div>
 
   return (
     <div className="min-h-screen bg-background">
@@ -135,6 +177,7 @@ export default function SettingsPage() {
                   value={profile.email}
                   onChange={(e) => handleProfileUpdate("email", e.target.value)}
                   placeholder="Enter your email"
+                  disabled
                 />
               </div>
 

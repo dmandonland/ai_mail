@@ -1,7 +1,7 @@
 
 
 import { MailLayout } from "@/components/mail/mail-layout"
-import { createClient } from "@/lib/server/supabase"
+import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
