@@ -12,9 +12,9 @@ export default async function MailPage() {
 
   // Supabase authentication
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect("/auth/sign-in")
+  const { data, error } = await supabase.auth.getUser()
+  if (error || !data?.user) {
+    redirect('/auth/sign-in')
   }
 
   const defaultLayout = layout ? JSON.parse(layout.value) : undefined
