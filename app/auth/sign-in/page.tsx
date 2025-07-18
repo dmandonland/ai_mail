@@ -50,7 +50,7 @@ export default function SignInPage() {
         password,
       });
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
+      // Redirect after successful sign-in
       router.push("/mail-client");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
@@ -113,15 +113,13 @@ export default function SignInPage() {
                 {error}
               </div>
             )}
-            <Link href="../mail-client">
-              <Button
-                type="submit"
-                className="w-full bg-[#a24ad9]"
-                disabled={!allValid || isLoading}
-              >
-                {isLoading ? "Signing In..." : "Sign In"}
-              </Button>
-            </Link>
+            <Button
+              type="submit"
+              className="w-full bg-[#a24ad9]"
+              disabled={!allValid || isLoading}
+            >
+              {isLoading ? "Signing In..." : "Sign In"}
+            </Button>
             <div className="flex justify-center mt-2">
               <Link href="/auth/signup" className="text-[#a24ad9] hover:underline text-sm">
                 Don&apos;t have an account? Sign Up
