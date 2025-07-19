@@ -41,7 +41,7 @@ export default function SignupPage() {
       }
   
       if (data.user?.confirmation_sent_at) {
-        router.push('/sign-up-success'); // Create this route
+        router.push('/auth/sign-up-success'); // Create this route
       } else {
         router.push('/mail-client');
       }
