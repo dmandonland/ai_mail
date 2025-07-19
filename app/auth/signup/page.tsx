@@ -18,31 +18,36 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const router = useRouter();
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
-
-    if (password !== repeatPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
-
+  
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { name },
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
+  
       if (error) throw error;
-      router.push("/auth/sign-up-success");
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      
+      // Check if email confirmation is required
+      if (data.user?.identities?.length === 0) {
+        throw new Error('Email already registered');
+      }
+  
+      if (data.user?.confirmation_sent_at) {
+        router.push('/sign'); // Create this route
+      } else {
+        router.push('/mail-client');
+      }
+  
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Signup failed');
     } finally {
       setIsLoading(false);
     }
