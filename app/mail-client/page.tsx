@@ -1,4 +1,4 @@
-"use server";
+
 
 import { MailLayout } from "@/components/mail/mail-layout"
 import { createClient } from "@/utils/supabase/server"

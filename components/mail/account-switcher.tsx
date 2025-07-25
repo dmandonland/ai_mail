@@ -10,10 +10,7 @@ import { ChevronDown, CheckIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import * as React from "react"
 import { useState } from "react"
-import { cookies } from "next/headers"
 
-
-  const cookieStore = await cookies()
 
 export async function AccountSwitcher({
   isCollapsed,
@@ -31,7 +28,7 @@ export async function AccountSwitcher({
       .toUpperCase()
   }
 
-  const supabase = createClient(cookieStore);
+  const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
