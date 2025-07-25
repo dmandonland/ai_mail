@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/client"
 
 // Fetch accounts from Supabase
 export async function fetchAccounts(): Promise<Account[]> {
-  const supabase = createClient();
+  const supabase = createClient(cookieStore);
   const { data, error } = await supabase.from("accounts").select("*");
   if (error) {
     console.error("Error fetching accounts from Supabase:", error);

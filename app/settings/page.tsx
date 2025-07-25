@@ -42,7 +42,7 @@ export default function SettingsPage() {
   })
 
   useEffect(() => {
-    const supabase = createClient()
+    const supabase = createClient(cookieStore)
     async function fetchProfile() {
       // 1. Get the authenticated user
       const { data: userData, error: userError } = await supabase.auth.getUser()
@@ -82,7 +82,7 @@ export default function SettingsPage() {
     setProfile((prev) => ({ ...prev, [field]: value }))
     // Only update Supabase if editing name or username
     if (field === "name" || field === "username") {
-      const supabase = createClient();
+      const supabase = createClient(cookieStore);
       // Get the authenticated user
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData?.user) return;
