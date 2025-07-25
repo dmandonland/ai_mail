@@ -1,4 +1,4 @@
-"use client"
+"use server"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -14,7 +14,7 @@ import { cookies } from "next/headers"
 
   const cookieStore = await cookies()
 
-export function AccountSwitcher({
+export async function AccountSwitcher({
   isCollapsed,
   onAccountChangeAction,
 }: {
