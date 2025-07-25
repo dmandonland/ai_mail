@@ -20,11 +20,11 @@ import { MailComposeDialog } from "@/components/mail/mail-compose-dialog"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import {
-  accounts as defaultAccounts,
   mails as defaultMails,
   secondaryNavLinks,
   markAsUnread,
   userLabels as defaultUserLabels,
+  fetchAccounts,
 } from "@/lib/mail-data"
 import type { Mail, Account, MailFolder } from "@/types/mail"
 import {
@@ -49,7 +49,8 @@ export function MailLayout({
 }: MailLayoutProps) {
   const isMobile = useMobile()
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed)
-  const [selectedAccount, setSelectedAccount] = React.useState<Account["id"]>(defaultAccounts[0].id)
+  const [accounts, setAccounts] = React.useState<Account[]>([])
+  const [selectedAccount, setSelectedAccount] = React.useState<Account["id"] | null>(null)
   const [selectedFolder, setSelectedFolder] = React.useState<MailFolder>("inbox")
   const [selectedMailId, setSelectedMailId] = React.useState<Mail["id"] | null>(null)
   const [isComposeOpen, setIsComposeOpen] = React.useState(false)
@@ -68,11 +69,30 @@ export function MailLayout({
     setSelectedMailId(null) // Reset selected mail on account change
   }
 
-  const currentAccount = defaultAccounts.find((acc) => acc.id === selectedAccount) || defaultAccounts[0]
+  const currentAccount = accounts.find((acc) => acc.id === selectedAccount) || accounts[0]
+  React.useEffect(() => {
+    const getAccounts = async () => {
+      const accs = await fetchAccounts();
+      setAccounts(accs);
+      if (accs.length > 0) {
+        setSelectedAccount(accs[0].id);
+      }
+    };
+    getAccounts();
+
+    // Listen for profile update event to refresh accounts
+    const handleProfileUpdate = () => {
+      getAccounts();
+    };
+    window.addEventListener("account-profile-updated", handleProfileUpdate);
+    return () => {
+      window.removeEventListener("account-profile-updated", handleProfileUpdate);
+    };
+  }, [])
 
   const filteredMails = mails.filter(
     (mail) =>
-      mail.accountId === selectedAccount &&
+      selectedAccount && mail.accountId === selectedAccount &&
       mail.folder === selectedFolder &&
       (
         labelFilter === "all" ||
@@ -92,10 +112,10 @@ export function MailLayout({
       const originalMail = prevMails.find((mail) => mail.id === mailId)
       if (originalMail) {
         // Create a new sent mail
-        const currentAccountObj = defaultAccounts.find(acc => acc.id === selectedAccount)
-        const newSentMail = {
+        const currentAccountObj = accounts.find(acc => acc.id === selectedAccount)
+        const newSentMail: Mail = {
           id: `sent-${Date.now()}`,
-          accountId: selectedAccount,
+          accountId: typeof selectedAccount === "string" ? selectedAccount : "",
           name: currentAccountObj?.label || "Me",
           email: currentAccountObj?.email || "me@example.com",
           subject: originalMail.subject.startsWith("Re: ") ? originalMail.subject : `Re: ${originalMail.subject}`,
@@ -104,7 +124,7 @@ export function MailLayout({
           read: true,
           labels: [],
           avatarFallback: (currentAccountObj?.label || "M").split(" ").map(s => s[0]).join("").toUpperCase(),
-          folder: "sent" as const,
+          folder: "sent",
           replies: [],
           replyToId: mailId,
         }
@@ -214,10 +234,10 @@ export function MailLayout({
       // Also create a new sent mail (for threading consistency)
       const originalMail = prevMails.find((mail) => mail.id === mailId)
       if (originalMail) {
-        const currentAccountObj = defaultAccounts.find(acc => acc.id === selectedAccount)
+        const currentAccountObj = accounts.find(acc => acc.id === selectedAccount)
         const newSentMail = {
           id: `sent-${Date.now()}`,
-          accountId: selectedAccount,
+          accountId: typeof selectedAccount === "string" ? selectedAccount : "",
           name: currentAccountObj?.label || "Me",
           email: currentAccountObj?.email || "me@example.com",
           subject: updates.subject,
@@ -239,10 +259,10 @@ export function MailLayout({
   const handleSaveNewDraft = (draft: { to: string; subject: string; body: string }) => {
     if (!draft.subject.trim() && !draft.body.trim()) return;
     setMails((prevMails) => {
-      const currentAccountObj = defaultAccounts.find(acc => acc.id === selectedAccount)
+      const currentAccountObj = accounts.find(acc => acc.id === selectedAccount)
       const newDraftMail: Mail = {
         id: `draft-${Date.now()}`,
-        accountId: selectedAccount,
+        accountId: typeof selectedAccount === "string" ? selectedAccount: "",
         name: currentAccountObj?.label || "Me",
         email: currentAccountObj?.email || "me@example.com",
         subject: draft.subject,
@@ -259,25 +279,26 @@ export function MailLayout({
     toast.success("Draft saved!")
   }
 
-  // Add this handler for forwarding
+  // Forward handler (single definition, using Supabase account data)
   const handleForward = async ({ subject, body, originalMail }: { to: string; subject: string; body: string; originalMail: Mail }) => {
-    const currentAccountObj = defaultAccounts.find(acc => acc.id === selectedAccount)
+    const currentAccountObj = accounts.find(acc => acc.id === selectedAccount)
+    if (!currentAccountObj) return;
+    if (!selectedAccount) return;
     setMails(prevMails => [
       ...prevMails,
       {
         id: `sent-${Date.now()}`,
-        accountId: selectedAccount,
-        name: currentAccountObj?.label || "Me",
-        email: currentAccountObj?.email || "me@example.com",
+        accountId: selectedAccount as string,
+        name: currentAccountObj.label || "Me",
+        email: currentAccountObj.email || "me@example.com",
         subject,
         text: body,
         date: new Date().toISOString(),
         read: true,
         labels: [],
-        avatarFallback: (currentAccountObj?.label || "M").split(" ").map(s => s[0]).join("").toUpperCase(),
+        avatarFallback: (currentAccountObj.label || "M").split(" ").map(s => s[0]).join("").toUpperCase(),
         folder: "sent",
         replies: [],
-        // Optionally, you can add a replyToId or forwardedFrom field for threading
         replyToId: originalMail.id,
         // Optionally, add a to field if you want to display recipient in sent mail
         // to,
@@ -350,8 +371,6 @@ export function MailLayout({
                   <div className="sm:max-md:max-w-screen border-r h-full p-2 flex flex-col">
                     <AccountSwitcher
                       isCollapsed={false}
-                      accounts={defaultAccounts}
-                      selectedAccount={currentAccount}
                       onAccountChangeAction={handleAccountChange}
                     />
                     <Separator className="my-2" />
@@ -367,14 +386,14 @@ export function MailLayout({
                   </div>
                 </div>
               )}
-                <div className="bg-background/95 p-4 sticky top-0 z-10 border-b">
-                  <form>
-                    <div className="relative">
-                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Search" className="pl-8" />
-                    </div>
-                  </form>
-                </div>
+              <div className="bg-background/95 p-4 sticky top-0 z-10 border-b">
+                <form>
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Search" className="pl-8" />
+                  </div>
+                </form>
+              </div>
             </div>
             <div className="flex-1 flex-col flex min-h-0 overflow-hidden">
               <MailList
@@ -444,8 +463,6 @@ export function MailLayout({
               <div className='flex items-center h-12 w-full'>
                 <AccountSwitcher
                   isCollapsed={isCollapsed}
-                  accounts={defaultAccounts}
-                  selectedAccount={currentAccount}
                   onAccountChangeAction={handleAccountChange}
                 />
               </div>
