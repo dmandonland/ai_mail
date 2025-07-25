@@ -1,4 +1,4 @@
-"use server"
+"use client";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { type User } from '@supabase/supabase-js'
 import { ChevronDown, CheckIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import * as React from "react"
-import { useState } from "react"
+
 
 
 export async function AccountSwitcher({
@@ -30,7 +30,7 @@ export async function AccountSwitcher({
 
   const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(null);
 
   React.useEffect(() => {
     const fetchUser = async () => {
@@ -159,4 +159,8 @@ export async function AccountSwitcher({
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+function useState<T>(arg0: null): [any, any] {
+  throw new Error("Function not implemented.")
 }
