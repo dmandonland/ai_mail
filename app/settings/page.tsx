@@ -78,8 +78,32 @@ export default function SettingsPage() {
     fetchProfile()
   }, [router])
 
-  const handleProfileUpdate = (field: string, value: string) => {
+  const handleProfileUpdate = async (field: string, value: string) => {
     setProfile((prev) => ({ ...prev, [field]: value }))
+    // Only update Supabase if editing name or username
+    if (field === "name" || field === "username") {
+      const supabase = createClient();
+      // Get the authenticated user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user) return;
+      // Map field to Supabase column
+      const columnMap: Record<string, string> = {
+        name: "full_name",
+        username: "username"
+      };
+      const column = columnMap[field];
+      if (!column) return;
+      const { error } = await supabase
+        .from("profiles")
+        .update({ [column]: value })
+        .eq("id", userData.user.id);
+      if (error) {
+        console.error(`Failed to update ${field} in Supabase:`, error);
+      } else {
+        // Dispatch a custom event to notify AccountSwitcher to refresh
+        window.dispatchEvent(new Event("account-profile-updated"));
+      }
+    }
   }
 
   const handleNotificationUpdate = (field: string, value: boolean) => {

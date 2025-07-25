@@ -33,7 +33,6 @@ export function AccountSwitcher({
   React.useEffect(() => {
     const fetchAccounts = async () => {
       setLoading(true);
-      // Replace 'accounts' with your actual Supabase table name
       const { data, error } = await supabase.from('accounts').select('*');
       if (error) {
         console.error('Error fetching accounts:', error);
@@ -48,6 +47,15 @@ export function AccountSwitcher({
       setLoading(false);
     };
     fetchAccounts();
+
+    // Listen for profile update event to refresh accounts
+    const handleProfileUpdate = () => {
+      fetchAccounts();
+    };
+    window.addEventListener("account-profile-updated", handleProfileUpdate);
+    return () => {
+      window.removeEventListener("account-profile-updated", handleProfileUpdate);
+    };
   }, []);
 
   const handleAccountChange = (id: string) => {
