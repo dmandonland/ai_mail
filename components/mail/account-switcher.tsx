@@ -3,19 +3,18 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Account } from "@/types/mail"
+import { createClient } from '@/utils/supabase/client'
+import { type User } from '@supabase/supabase-js'
 import { ChevronDown, CheckIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import * as React from "react"
+import { useState } from "react"
 
 export function AccountSwitcher({
   isCollapsed,
-  accounts,
-  selectedAccount,
   onAccountChangeAction,
 }: {
   isCollapsed: boolean
-  accounts: Account[]
-  selectedAccount: Account
   onAccountChangeAction: (id: string) => void
 }) {
   const getInitials = (label: string): string => {
@@ -26,8 +25,47 @@ export function AccountSwitcher({
       .join('')
       .toUpperCase()
   }
+  const supabase = createClient();
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  React.useEffect(() => {
+    const fetchAccounts = async () => {
+      setLoading(true);
+      // Replace 'accounts' with your actual Supabase table name
+      const { data, error } = await supabase.from('accounts').select('*');
+      if (error) {
+        console.error('Error fetching accounts:', error);
+        setAccounts([]);
+      } else {
+        setAccounts(data || []);
+        // Optionally set the first account as selected by default
+        if (data && data.length > 0) {
+          setSelectedAccount(data[0]);
+        }
+      }
+      setLoading(false);
+    };
+    fetchAccounts();
+  }, []);
+
+  const handleAccountChange = (id: string) => {
+    const account = accounts.find(acc => acc.id === id);
+    if (account) {
+      setSelectedAccount(account);
+      onAccountChangeAction(id);
+    }
+  };
 
   // When fully collapsed (minimum width), show just the avatar icon
+  if (loading) {
+    return <div className="p-4 text-center text-muted-foreground">Loading accounts...</div>;
+  }
+  if (!selectedAccount) {
+    return <div className="p-4 text-center text-muted-foreground">No account found.</div>;
+  }
+
   if (isCollapsed) {
     return (
       <DropdownMenu>
@@ -50,7 +88,7 @@ export function AccountSwitcher({
           {accounts.map((account) => (
             <DropdownMenuItem 
               key={account.id} 
-              onSelect={() => onAccountChangeAction(account.id)}
+              onSelect={() => handleAccountChange(account.id)}
               className="flex items-center gap-2"
             >
               <Avatar className="h-5 w-5">
@@ -70,7 +108,7 @@ export function AccountSwitcher({
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
-    )
+    );
   }
 
   // Default expanded view
@@ -102,7 +140,7 @@ export function AccountSwitcher({
         {accounts.map((account) => (
           <DropdownMenuItem 
             key={account.id} 
-            onSelect={() => onAccountChangeAction(account.id)}
+            onSelect={() => handleAccountChange(account.id)}
             className="flex items-center gap-2 w-full"
           >
             <Avatar className="h-6 w-6 border border-white">
@@ -123,5 +161,5 @@ export function AccountSwitcher({
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

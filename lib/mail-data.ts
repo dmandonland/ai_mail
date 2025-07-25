@@ -1,23 +1,18 @@
 import type React from "react"
 import type { Mail, Account, MailFolder } from "@/types/mail"
 import { Inbox, Send, FileText, Archive, Trash2, AlertOctagon, Users, Tags, Settings, } from "lucide-react"
+import { createClient } from "@/utils/supabase/client"
 
-export const accounts: Account[] = [
-  {
-    id: "account-1",
-    label: "Alicia Keys",
-    email: "alicia@example.com",
-    icon: "UserCircle",
-    avatar: undefined,
-  },
-  {
-    id: "account-2",
-    label: "Bob Marley",
-    email: "bob@example.com",
-    icon: "UserCircle",
-    avatar: undefined,
-  },
-]
+// Fetch accounts from Supabase
+export async function fetchAccounts(): Promise<Account[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("accounts").select("*");
+  if (error) {
+    console.error("Error fetching accounts from Supabase:", error);
+    return [];
+  }
+  return data || [];
+}
 
 export const mails: Mail[] = [
   {
